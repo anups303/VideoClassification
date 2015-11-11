@@ -3,6 +3,7 @@ package cavd;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -39,7 +40,11 @@ private static String videoId;
 	}
 
 	public static void getFileName(File dir) {
-		File[] files = dir.listFiles();
+		File[] files = dir.listFiles(new FilenameFilter() {
+			public boolean accept(File dir, String name) {
+				return name.toLowerCase().endsWith(".srt");
+			}
+		});
 		for(File file: files) {
 //			System.out.println(file.toString());
 			if(file.isDirectory())
@@ -47,12 +52,12 @@ private static String videoId;
 			else {
 				videoId = FilenameUtils.removeExtension(file.getName());
 				videoInfoLoc = file;
-				System.out.println(videoId);
+//				System.out.println(videoId);
 				parseVideoInfo();
 			}
 		}
 //		Debug: Only for single files
-		/*File file = new File("./src/training/general/KDjBEY_3qCI.srt");
+		/*File file = new File("./src/testing/5WlVFdlH_aM.srt");
 		videoId = FilenameUtils.removeExtension(file.getName());
 		videoInfoLoc = file;
 		parseVideoInfo();*/

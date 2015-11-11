@@ -42,7 +42,7 @@ public class TestClassifier {
 		}
 	}
 	
-	public void makeInstance() {
+	public Attribute makeInstance() {
 		Attribute attribute1 = new Attribute("text", (FastVector)null);
 		FastVector fvNominalVal = new FastVector(8);
 		fvNominalVal.addElement("animation");
@@ -63,25 +63,32 @@ public class TestClassifier {
 		instance.setValue(attribute1, text);
 		instances.add(instance);
 //		System.out.println(instances);
+		return instances.classAttribute();
 	}
 	
-	public void classify() {
+	public double[] classify(int showProb) {
+		double[] fDistribution = null;
 		try {
 			double pred = fc.classifyInstance(instances.instance(0));
-			System.out.println("Predicted class: "+instances.classAttribute().value((int)pred));
-//			double[] fDistribution = fc.distributionForInstance(instances.instance(1));
-//			System.out.println(fDistribution);
+			System.out.println("Text predicted class: "+instances.classAttribute().value((int)pred));
+			fDistribution = fc.distributionForInstance(instances.firstInstance());
+			if(showProb == 1) {
+				System.out.println("Probability from video info and caption files");
+				for(int i=0;i<fDistribution.length;i++)
+					System.out.println(instances.classAttribute().value(i)+":"+Double.toString(fDistribution[i]));
+			}
 		} catch(Throwable t) {
 			t.printStackTrace();
 		}
+		return fDistribution;
 	}
 	
 	public static void main(String[] args) throws Exception {
 		TestClassifier classifier = new TestClassifier();
-		classifier.load("./src/testing/ljpBwguIqos.srt");
-		classifier.loadModel("./src/fClassifier.model");
+		classifier.load("./src/testing/-8dc7vZjx8E.srt");
+		classifier.loadModel("./src/RandomForest.model");
 		classifier.makeInstance();
-		classifier.classify();
+		classifier.classify(0);
 	}
 
 }

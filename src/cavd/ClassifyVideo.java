@@ -8,9 +8,14 @@ import java.util.Random;
 
 import weka.attributeSelection.InfoGainAttributeEval;
 import weka.attributeSelection.Ranker;
+import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
+import weka.classifiers.bayes.NaiveBayesMultinomial;
+import weka.classifiers.functions.SMO;
 import weka.classifiers.meta.Decorate;
 import weka.classifiers.meta.FilteredClassifier;
+import weka.classifiers.meta.RotationForest;
+import weka.classifiers.meta.Vote;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
@@ -26,6 +31,17 @@ public class ClassifyVideo {
 	Instances dataRaw;
 	FilteredClassifier fc;
 	MultiFilter filter;
+	StringToWordVector stringFilter;
+	AlphabeticTokenizer tokenizer;
+	AttributeSelection attributeRank;
+	InfoGainAttributeEval attribEval;
+	Ranker ranker;
+	Decorate cl1;
+	RandomForest cl4;
+	SMO cl5;
+	NaiveBayesMultinomial cl3;
+	RotationForest cl2;
+	Vote classifier;
 	
 	public void loadData(String dir) {
 		try {
@@ -35,7 +51,7 @@ public class ClassifyVideo {
 			//convert dataset into .arff (if necessary)
 			/*ArffSaver saver = new ArffSaver();
 			saver.setInstances(dataRaw);
-			saver.setDestination(new File("./src/trainingDataset.arff"));
+			saver.setFile(new File("./src/trainingDataset.arff"));
 			saver.writeBatch();*/
 		} catch(IOException e) {
 			System.err.println(e.getCause()+" "+e.getMessage());
@@ -45,32 +61,42 @@ public class ClassifyVideo {
 	public void evaluate() {
 		try {
 			dataRaw.setClassIndex(1);
-			StringToWordVector stringFilter = new StringToWordVector();
+			stringFilter = new StringToWordVector();
 			stringFilter.setIDFTransform(true);
 			stringFilter.setTFTransform(true);
 			stringFilter.setLowerCaseTokens(true);
 			stringFilter.setOutputWordCounts(true);
-			AlphabeticTokenizer tokenizer = new AlphabeticTokenizer();
+			tokenizer = new AlphabeticTokenizer();
 			stringFilter.setTokenizer(tokenizer);
 			stringFilter.setUseStoplist(true);
 			stringFilter.setWordsToKeep(20000);
-			AttributeSelection attributeRank = new AttributeSelection();
-			InfoGainAttributeEval attribEval = new InfoGainAttributeEval();
-			Ranker ranker = new Ranker();
+			attributeRank = new AttributeSelection();
+			attribEval = new InfoGainAttributeEval();
+			ranker = new Ranker();
 			ranker.setThreshold(0);
 			attributeRank.setEvaluator(attribEval);
 			attributeRank.setSearch(ranker);
 			filter = new MultiFilter();
 			filter.setFilters(new Filter[]{stringFilter, attributeRank});
+//			filter.setFilters(new Filter[]{stringFilter});
 			fc = new FilteredClassifier();
-			Decorate classifier = new Decorate();
-			RandomForest base = new RandomForest();
-			classifier.setClassifier(base);
+			cl1 = new Decorate();
+			cl2 = new RotationForest();
+			cl3 = new NaiveBayesMultinomial();
+			cl4 = new RandomForest();
+			cl5 = new SMO();
+			cl4.setNumTrees(300);
+			cl1.setClassifier(cl4);
+			cl2.setClassifier(cl4);
+			classifier = new Vote();
+			classifier.setClassifiers(new Classifier[]{cl1,cl2,cl3,cl4,cl5});
 			fc.setClassifier(classifier);
-//			fc.setClassifier(base);
 			fc.setFilter(filter);
 			Evaluation eval = new Evaluation(dataRaw);
 			eval.crossValidateModel(fc, dataRaw, 10, new Random(1));
+			System.out.println(eval.toSummaryString());
+			System.out.println(eval.toMatrixString());
+			System.out.println(eval.toClassDetailsString());
 		} catch(Exception e) {
 			System.err.println(e.getMessage());
 		}
@@ -79,31 +105,8 @@ public class ClassifyVideo {
 	public void learn() {
 		try {
 			dataRaw.setClassIndex(1);
-			StringToWordVector stringFilter = new StringToWordVector();
-			stringFilter.setIDFTransform(true);
-			stringFilter.setTFTransform(true);
-			stringFilter.setLowerCaseTokens(true);
-			stringFilter.setOutputWordCounts(true);
-			AlphabeticTokenizer tokenizer = new AlphabeticTokenizer();
-			stringFilter.setTokenizer(tokenizer);
-			stringFilter.setUseStoplist(true);
-			stringFilter.setWordsToKeep(20000);
-			AttributeSelection attributeRank = new AttributeSelection();
-			InfoGainAttributeEval attribEval = new InfoGainAttributeEval();
-			Ranker ranker = new Ranker();
-			ranker.setThreshold(0);
-			attributeRank.setEvaluator(attribEval);
-			attributeRank.setSearch(ranker);
-			filter = new MultiFilter();
-			filter.setFilters(new Filter[]{stringFilter, attributeRank});
-			fc = new FilteredClassifier();
-			Decorate classifier = new Decorate();
-			RandomForest base = new RandomForest();
-			classifier.setClassifier(base);
-			fc.setClassifier(classifier);
-//			fc.setClassifier(base);
-			fc.setFilter(filter);
 			fc.buildClassifier(dataRaw);
+//			System.out.println(fc);
 		} catch(Exception e) {
 			System.err.println(e.getMessage());
 		}
@@ -111,7 +114,7 @@ public class ClassifyVideo {
 	
 	public void saveModel(String filename) {
 		try {
-			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("./src/fClassifier.model"));
+			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename));
 			out.writeObject(fc);
 			out.close();
 		} catch(IOException e) {
@@ -121,13 +124,8 @@ public class ClassifyVideo {
 	
 	public static void main(String[] args) throws Exception {
 		
-		
-//		System.out.println(eval.toSummaryString());
-//		System.out.println(eval.toClassDetailsString());
-//		System.out.println(fc);
-		
 		ClassifyVideo learner = new ClassifyVideo();
-		learner.loadData("./src/training/");
+		learner.loadData("./src/training/captions/");
 		learner.evaluate();
 		learner.learn();
 		learner.saveModel("./src/fClassifier.model");

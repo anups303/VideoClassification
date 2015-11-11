@@ -29,7 +29,7 @@ import com.google.common.collect.Lists;
 
 public class GetTitleInfo {
 
-private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+	private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 	
 	private static final JsonFactory JSON_FACTORY = new JacksonFactory();
 	
