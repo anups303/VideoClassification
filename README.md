@@ -10,8 +10,8 @@ Prerequisites:
 
 Procedure:
 
-Run CollateInfo.java on caption files once to add video title information to srt files
-Run TextClassifierTester.java for individual srt files or for all together
+* Run CollateInfo.java on caption files once to add video title information to srt files
+* Run TextClassifierTester.java for individual srt files or for all together
 
 Audio Classification:
 
@@ -20,13 +20,11 @@ Prerequisites:
 1. Extract wav files from videos being tested.
 2. Extract MFCC features and its derivatives from wav files using jAudio, get output as .arff files
 
-Run AddClassAttribute.java to add a class attribute (if needed).
-Run AudioClassificationTester.java for individual arff files or all together.
+* Run AddClassAttribute.java to add a class attribute (if needed).
+* Run AudioClassificationTester.java for individual arff files or all together.
 
 Other files:
 
-TextClassifier.java for training text classifier
-
-AudioClassifier.java for training audio classifier
-
-AudioTextClassifier.java for running combination of audio and text classifier on pair of audio arff and srt files
+* TextClassifier.java for training text classifier
+* AudioClassifier.java for training audio classifier
+* AudioTextClassifier.java for running combination of audio and text classifier on pair of audio arff and srt files
