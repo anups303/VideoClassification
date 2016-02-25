@@ -6,16 +6,20 @@ import java.io.ObjectOutputStream;
 import java.util.Random;
 
 import weka.classifiers.Evaluation;
-import weka.classifiers.trees.LADTree;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
 
+/*
+ * Trains classifier on audio data. Takes single .arff file as input. Extract MFCC and its derivatives from wav of individual video files.
+ * Merge individual .arff files into a combined file which will be input. Saves classifier model.
+ */
+
 public class AudioClassifier {
 	Instances data;
-	LADTree ladTree;
 	RandomForest rForest;
 	public void loadDataset(String filename) {
+//		Load dataset here
 		try {
 			DataSource source = new DataSource(filename);
 			data = source.getDataSet();
@@ -26,11 +30,10 @@ public class AudioClassifier {
 		}
 	}
 	public void evaluate() {
+//		Creation of classifier
 		try {
-//			ladTree = new LADTree();
 			rForest = new RandomForest();
 			Evaluation eval = new Evaluation(data);
-//			eval.crossValidateModel(ladTree, data, 10, new Random(1));
 			eval.crossValidateModel(rForest, data, 10, new Random(1));
 			System.out.println(eval.toSummaryString());
 			System.out.println(eval.toMatrixString());
@@ -40,10 +43,9 @@ public class AudioClassifier {
 		}
 	}
 	public void learn() {
+//		Classifier trained upon dataset
 		try {
-//			ladTree.buildClassifier(data);
 			rForest.buildClassifier(data);
-//			System.out.println(ladTree);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -51,7 +53,6 @@ public class AudioClassifier {
 	public void saveModel(String filename) {
 		try {
 			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename));
-//			out.writeObject(ladTree);
 			out.writeObject(rForest);
 			out.close();
 		} catch(IOException e) {
@@ -60,6 +61,7 @@ public class AudioClassifier {
 	}
 	public static void main(String[] args) throws Exception {
 		AudioClassifier audClass = new AudioClassifier();
+//		Load dataset here
 		audClass.loadDataset("./src/training/audio/final.arff");
 		audClass.evaluate();
 		audClass.learn();

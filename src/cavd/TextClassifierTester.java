@@ -1,10 +1,14 @@
 package cavd;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+
+import org.apache.commons.io.FilenameUtils;
 
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.Attribute;
@@ -12,13 +16,19 @@ import weka.core.Instance;
 import weka.core.FastVector;
 import weka.core.Instances;
 
-public class TestClassifier {
+/*
+ * Evaluates text classifier on video captions with appended video info data. Change source folder and load model in main method
+ */
+
+public class TextClassifierTester {
 	
 	String text;
+	static String filename;
 	Instances instances;
 	FilteredClassifier fc;
 	
 	public void load(String filename) {
+//		Load caption and info file into string
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(filename));
 			String line;
@@ -33,6 +43,7 @@ public class TestClassifier {
 	}
 	
 	public void loadModel(String filename) {
+//		Load a saved classifier
 		try {
 			ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename));
 			fc = (FilteredClassifier)in.readObject();
@@ -43,6 +54,7 @@ public class TestClassifier {
 	}
 	
 	public Attribute makeInstance() {
+//		Add a class attribute
 		Attribute attribute1 = new Attribute("text", (FastVector)null);
 		FastVector fvNominalVal = new FastVector(8);
 		fvNominalVal.addElement("animation");
@@ -62,11 +74,11 @@ public class TestClassifier {
 		Instance instance = new Instance(2);
 		instance.setValue(attribute1, text);
 		instances.add(instance);
-//		System.out.println(instances);
 		return instances.classAttribute();
 	}
 	
 	public double[] classify(int showProb) {
+//		Display results of classification
 		double[] fDistribution = null;
 		try {
 			double pred = fc.classifyInstance(instances.instance(0));
@@ -84,11 +96,27 @@ public class TestClassifier {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		TestClassifier classifier = new TestClassifier();
-		classifier.load("./src/testing/-8dc7vZjx8E.srt");
-		classifier.loadModel("./src/RandomForest.model");
+		TextClassifierTester classifier = new TextClassifierTester();
+//		Source folder for srt files
+		File dir = new File("./src/testing/");
+		File[] files = dir.listFiles(new FilenameFilter() {
+			public boolean accept(File dir, String name) {
+				return name.toLowerCase().endsWith(".srt");
+			}
+		});
+		for(File file:files) {
+			filename = FilenameUtils.removeExtension(file.getName());
+			classifier.load(file.toString());
+//			Change classifier here if needed
+			classifier.loadModel("./src/Vote.model");
+			classifier.makeInstance();
+			classifier.classify(0);
+		}
+//		Debug: For single srt file
+		/*classifier.load("./src/testing/NyelLxxJqFc.srt");
+		classifier.loadModel("./src/Vote.model");
 		classifier.makeInstance();
-		classifier.classify(0);
+		classifier.classify(0);*/
 	}
 
 }

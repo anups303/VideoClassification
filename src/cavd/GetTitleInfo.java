@@ -1,16 +1,11 @@
 package cavd;
 
-import java.io.BufferedReader;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.Properties;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.googleapis.media.MediaHttpDownloader;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpTransport;
@@ -18,14 +13,17 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.youtube.YouTube;
-import com.google.api.services.youtube.YouTube.Captions.Download;
 import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoCategory;
 import com.google.api.services.youtube.model.VideoCategoryListResponse;
 import com.google.api.services.youtube.model.VideoCategorySnippet;
 import com.google.api.services.youtube.model.VideoListResponse;
 import com.google.api.services.youtube.model.VideoSnippet;
-import com.google.common.collect.Lists;
+
+/*
+ * Used by CollateInfo.java to extract video title info. Uses youtube.properties file to utilize YT API.
+ * Store developer key in youtube.properties
+ */
 
 public class GetTitleInfo {
 
@@ -36,12 +34,8 @@ public class GetTitleInfo {
 	//identifies file containing developer's API key
 	private static final String PROPERTIES_FILENAME = "youtube.properties";
 	
-	private static final String SRT = "srt";
-	
 	//Used to make YouTube Data API requests
 	private static YouTube youtube;
-	
-	private static String videoId;
 	
 	private String title, desc, category, channel;
 	
@@ -61,11 +55,8 @@ public class GetTitleInfo {
 		return channel;
 	}
 	
-//	public static void main(String[] args) {
 	public GetTitleInfo(String videoId) {
 		
-		this.videoId = videoId;
-		List<String> scopes = Lists.newArrayList("https://www.googleapis.com/auth/youtube.force-ssl");
 		//read developer key from properties file
 		Properties properties = new Properties();
 		try {
@@ -84,18 +75,9 @@ public class GetTitleInfo {
 			}).setApplicationName("youtube-get-video-info").build();
 			
 			String apiKey = properties.getProperty("youtube.apikey");
-			
-			
-			//prompt for video id
-			//String videoId = getVideoIdFromUser();
-			
-			//retrieve resources representing specified videos
 			YouTube.Videos.List listVideosRequest = youtube.videos().list("snippet").setId(videoId);
 			listVideosRequest.setKey(apiKey);
 			VideoListResponse listResponse = listVideosRequest.execute();
-			
-//			to check the HTTP request
-//			System.out.println(listVideosRequest.buildHttpRequestUrl().toString());
 			
 			List<Video> videoList = listResponse.getItems();
 			
@@ -107,7 +89,6 @@ public class GetTitleInfo {
 			YouTube.VideoCategories.List listCategoriesRequest = youtube.videoCategories().list("snippet").setId(categoryId);
 			listCategoriesRequest.setKey(apiKey);
 			listCategoriesRequest.setFields("items/snippet/title");
-//			System.out.println(listCategoriesRequest.buildHttpRequestUrl().toString());
 			VideoCategoryListResponse categoryListResponse = listCategoriesRequest.execute();
 			
 			List<VideoCategory> categoryList = categoryListResponse.getItems();
@@ -127,31 +108,6 @@ public class GetTitleInfo {
         } catch (Throwable t) {
             t.printStackTrace();
         }
-	}
-	
-	private static String getVideoIdFromUser() throws IOException {
-		
-		String videoId = "";
-		//Video ID should only be the string after v=
-		System.out.print("Please enter video id: ");
-		BufferedReader bReader = new BufferedReader(new InputStreamReader(System.in));
-		videoId = bReader.readLine();
-		
-		return videoId;
-	}
-	
-	private static void downloadCaption(String captionId, String apiKey) throws IOException {
-		
-		Download captionDownload = youtube.captions().download(captionId).setTfmt(SRT);
-		
-		MediaHttpDownloader downloader = captionDownload.getMediaHttpDownloader();
-		
-		downloader.setDirectDownloadEnabled(false);
-		
-		OutputStream outputFile = new FileOutputStream("captionFile.srt");
-		captionDownload.setKey(apiKey);
-		captionDownload.executeAndDownloadTo(outputFile);
-		
 	}
 	
 }

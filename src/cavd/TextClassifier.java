@@ -26,7 +26,11 @@ import weka.filters.MultiFilter;
 import weka.filters.unsupervised.attribute.StringToWordVector;
 import weka.filters.supervised.attribute.AttributeSelection;
 
-public class ClassifyVideo {
+/*
+ * Used to train text classifier for videos. Change input folder in main method. Output is the saved classifier model
+ */
+
+public class TextClassifier {
 	
 	Instances dataRaw;
 	FilteredClassifier fc;
@@ -59,6 +63,7 @@ public class ClassifyVideo {
 	}
 	
 	public void evaluate() {
+//		Creation of filtered classifier here
 		try {
 			dataRaw.setClassIndex(1);
 			stringFilter = new StringToWordVector();
@@ -78,7 +83,6 @@ public class ClassifyVideo {
 			attributeRank.setSearch(ranker);
 			filter = new MultiFilter();
 			filter.setFilters(new Filter[]{stringFilter, attributeRank});
-//			filter.setFilters(new Filter[]{stringFilter});
 			fc = new FilteredClassifier();
 			cl1 = new Decorate();
 			cl2 = new RotationForest();
@@ -89,10 +93,12 @@ public class ClassifyVideo {
 			cl1.setClassifier(cl4);
 			cl2.setClassifier(cl4);
 			classifier = new Vote();
+//			Setting base classifiers
 			classifier.setClassifiers(new Classifier[]{cl1,cl2,cl3,cl4,cl5});
 			fc.setClassifier(classifier);
 			fc.setFilter(filter);
 			Evaluation eval = new Evaluation(dataRaw);
+//			Training done on 10-fold cross validation
 			eval.crossValidateModel(fc, dataRaw, 10, new Random(1));
 			System.out.println(eval.toSummaryString());
 			System.out.println(eval.toMatrixString());
@@ -103,10 +109,10 @@ public class ClassifyVideo {
 	}
 	
 	public void learn() {
+//		Train classifier upon dataset
 		try {
 			dataRaw.setClassIndex(1);
 			fc.buildClassifier(dataRaw);
-//			System.out.println(fc);
 		} catch(Exception e) {
 			System.err.println(e.getMessage());
 		}
@@ -124,11 +130,12 @@ public class ClassifyVideo {
 	
 	public static void main(String[] args) throws Exception {
 		
-		ClassifyVideo learner = new ClassifyVideo();
+		TextClassifier learner = new TextClassifier();
+//		Change source folder for loading srt files
 		learner.loadData("./src/training/captions/");
 		learner.evaluate();
 		learner.learn();
-		learner.saveModel("./src/fClassifier.model");
+		learner.saveModel("./src/Vote.model");
 	}
 
 }
